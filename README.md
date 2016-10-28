@@ -50,7 +50,7 @@ reduced to O(log n) if the target points are sorted into a KD-tree before runnin
 
 <div style="margin: auto;display: block;">
 <img src="images/3dtree.png" width="300" alt="3D KD-Tree">
-<img src="images/KDTree-search.gif" width="800" alt="KD-Tree Nearest Neighbor">
+<img src="images/KDTree-search.gif" width="600" alt="KD-Tree Nearest Neighbor">
 </div>
 <center>**3D KD-Tree (left) and nearest neighbor search (right)**</center>
 
@@ -59,20 +59,42 @@ alignment accuracy for simple models, or pointclouds with large initial offsets.
 two pointclouds of the same box with large initial offsets. The final result shows good general alignment, it gets stuck
 with about a 5 degree rotational error and never full converges to perfect alignment.
 
-<img src="images/cube_local_minima.png" width="500" alt="3D KD-Tree"  style="margin: auto;display: block;">
+<img src="images/cube_local_minima.png" width="500" alt="local minima"  style="margin: auto;display: block;">
 
 Similarlly, when using a point cloud generated from a microsoft kinect looking down a hallway, we see good general alignment,
 however, the point cloud appears to have shift too far along the length of the hallway.
-<img src="images/hallway2.png" width="500" alt="3D KD-Tree"  style="margin: auto;display: block;">
+<img src="images/hallway2.png" width="500" alt="kinect image"  style="margin: auto;display: block;">
 
 <a name="part2"/>
 ## Section 2: Runtime Performance
 *Iteration timers were run using glfwGetTime to get the system time. GPU thread analysis run using NVIDIA Nsight tools.*
+<img src="images/Iteration_speeds.png" width="250" alt="runtime"  style="margin: auto;display: block;">
 
+Basic runtime analysis shows exactly what we expect. The simple act of moving from CPU to GPU results in a 30 fold improvement
+for tests run on kinect data with ~12,000 points each in the scene and target. Similarly, the addition of the KD-tree nearest 
+neighbor search adds an additional 7x improvement on top of that, resulting in processing of up to 300 iterations per second.
+Depending on the runtime requirements for an embedded application and expected iterations until convergence, this could run
+close to real time for a camera input of 30 Hz, though this does not account for additional processing of building the kd-tree,
+or converting the raw camera data into 3D coordinates and filtering out points that exceed the cameras operable range.
 
-![GPU Block Size](images/Iteration_speeds.png)
-![GPU Block Size](images/BlockSize.png)
-![GPU Block Size](images/KernelPerformance.png)
+Additional performance was run to determine optimal block size for the GPU implementations, and blocks around 128 to 512 worked best.
+128 threads per block was definitely the best for the basic implementation, but results for the KD-tree accelerated version were all
+within error.
+
+<img src="images/BlockSize.png" width="800" alt="blocksize optimization"  style="margin: auto;display: block;">
+
+During optimizations, the biggest costs for the kd-tree approach was generating the correspondences and the reductions of these 
+points to generate a single matrix to run SVD on. For the vector reductions, the thrust library was used to get the best performance
+possible, though investigation into alternative solutions without the reductions would be interesting.
+
+For user implemented kernels, the three most costly were analyzed below. Particularly for the nearest neighbor search and point
+transformations, the biggest bottleneck was in memory access of the points in global memory. Some work was put into trying to load
+parts of the kd-tree into shared memory to improve lookup time (left and right branches for each node were contiguous in memory), 
+but unfortunately the search time for a branch that fits in shared memory was not long enough to warrant switching blocks into shared
+memory several times. Since the transformation and error calculations were single line kernels that pulled only two points, little 
+additional improvement could be made to reduce memory throttle.
+<img src="images/KernelPerformance.png" width="1000" alt="kernel delay"  style="margin: auto;display: block;">
+
 
 <a name="part3"/>
 ## Section 3: Further Improvements
@@ -100,7 +122,7 @@ Pointclouds are loaded at run time by passing in two plain text files as command
 per line, separated by commas (e.g. "1, 2, 3 \n 4, 5, 6 \n").
 
 This code uses Eric Jang's Fast 3x3 SVD library provided from his GitHub page to generate rotations updates for each step
-(https://github.com/ericjang/svd3).
+(<a href = "https://github.com/ericjang/svd3">https://github.com/ericjang/svd3</a>).
 
 **CMake note:** Do not change any build settings or add any files to your
 project directly (in Visual Studio, Nsight, etc.) Instead, edit the
