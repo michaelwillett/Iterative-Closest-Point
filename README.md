@@ -50,7 +50,7 @@ reduced to O(log n) if the target points are sorted into a KD-tree before runnin
 
 <div style="margin: auto;display: block;">
 <img src="images/3dtree.png" width="300" alt="3D KD-Tree">
-<img src="images/KDTree-search.gif" width="600" alt="KD-Tree Nearest Neighbor">
+<img src="images/KDTree-search.gif" width="400" alt="KD-Tree Nearest Neighbor">
 </div>
 <center>**3D KD-Tree (left) and nearest neighbor search (right)**</center>
 
