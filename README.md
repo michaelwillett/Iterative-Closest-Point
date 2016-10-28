@@ -6,10 +6,9 @@ Project 4 - GPU Accelerated ICP **
 
 ## Contents
 1. [Introduction](#intro)
-2. [Naive Solution](#part1)
-3. [Neighborhood Search](#part2)
-4. [Performance Analysis](#part3)
-5. [Development Process](#part4)
+2. [ICP Algorithm](#part1)
+3. [Performance Analysis](#part2)
+4. [Further Work](#part3)
 6. [Build Instructions](#appendix)
 
 
@@ -50,7 +49,7 @@ reduced to O(log n) if the target points are sorted into a KD-tree before runnin
 
 <div style="margin: auto;display: block;">
 <img src="images/3dtree.png" width="300" alt="3D KD-Tree">
-<img src="images/KDTree-search.gif" width="400" alt="KD-Tree Nearest Neighbor">
+<img src="images/KDTree-search.gif" width="500" alt="KD-Tree Nearest Neighbor">
 </div>
 <center>**3D KD-Tree (left) and nearest neighbor search (right)**</center>
 
